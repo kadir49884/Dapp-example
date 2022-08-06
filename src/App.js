@@ -100,6 +100,7 @@ function App() {
     
 
         <button onClick={fetchGreeting}>Selamlamayı Çağır</button>
+        <br></br>
         <button onClick={setGreeting}>Selamı Yeniden Ayarla</button>
         <input onChange={e => setGreetingValue(e.target.value)} placeholder="Selamlama mesajını değiştir" />
       <div> 
