@@ -1,5 +1,9 @@
 import './App.css';
 import { useState } from 'react'
+import { useEffect } from 'react'
+import { useMemo } from 'react'
+
+
 import { ethers } from 'ethers'
 import Greeter from './Greeter.json'
 
@@ -17,11 +21,20 @@ const greeterAddress = "0xFeC44fF8ee1f92a8a826f338d945dC8a0B178733"
 */
 const greeterAddress = "0x90b18f49B8484e6799CDAAf56Bc4198550180eB5"
 
+
 function App() {
   // local state de kayıtları tutuyoruz.
   const [greeting, setGreetingValue] = useState()
+  const [data, dataInfo] = useState()
     
   const [greeterAddress, setGreeterAddress] = useState();
+  
+  useEffect(() =>{
+    console.log("veri degisti");
+  }, [data]);
+
+  
+
     
   // Metamask izni için kullanıyoruz.
   async function requestAccount() {
@@ -38,8 +51,9 @@ function App() {
       const contract = new ethers.Contract(greeterAddress, Greeter.abi, provider)
       try {
         // kontratta yer alan greet fonksiyonunu çağır
-        const data = await contract.greet()
+        dataInfo(await contract.greet())
         console.log('data: ', data)
+
       } catch (err) {
         // hata varsa ekrana yaz
         console.log("Error: ", err)
@@ -83,13 +97,21 @@ function App() {
         {/*******************************************/}
 
         <p>(Metamask da ağı değiştirmeyi unutmayın)</p>
-	    
+    
 
         <button onClick={fetchGreeting}>Selamlamayı Çağır</button>
         <button onClick={setGreeting}>Selamı Yeniden Ayarla</button>
         <input onChange={e => setGreetingValue(e.target.value)} placeholder="Selamlama mesajını değiştir" />
+      <div> 
+        <p>Aktif mesaj: {String(data)}</p>
+        </div>
+
       </header>
+
+
     </div>
+   
+
   );
 }
 
