@@ -13,13 +13,21 @@ async function main() {
   // manually to make sure everything is compiled
   // await hre.run('compile');
 
-  // We get the contract to deploy
+
+  // const Petrichor = await hre.ethers.getContractFactory("Petrichor");
+  // const petrichor = await Petrichor.deploy();
+  // await petrichor.deployed();
+  // console.log("Petrichor deployed to:", petrichor.address);
+
+
   const Movie = await hre.ethers.getContractFactory("Movie");
-  const movie = await Movie.deploy("Hello, Hardhat!");
-
+  const movie = await Movie.deploy("0x9606Aa2C002134516B5dcBFc76E00abE46a05469");
   await movie.deployed();
-
   console.log("MovieContract deployed to:", movie.address);
+
+  
+
+
 }
 
 // We recommend this pattern to be able to use async/await everywhere

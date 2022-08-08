@@ -1,71 +1,94 @@
 import "./App.css";
 import { useState, useEffect } from "react";
-import { BigNumber, ethers } from "ethers";
-import Movie from "./Movie.json";
 import { useMovieContract } from "./hooks/useMovieContract";
-
-// Deploy sonrası verdiği adresi buraya giriyoruz
-
-// const greeterAddress = "0x90b18f49B8484e6799CDAAf56Bc4198550180eB5"
+import { usePetrichorContract } from "./hooks/usePetrichorContract";
+import { useAllowance } from "./hooks/useAllowance";
+import { formatEther } from "ethers/lib/utils";
+import { useSignerAddress } from "./hooks/useSignerAddress";
+import { ethers } from "ethers";
 
 function App() {
-  const [account, setAccount] = useState();
-  const [data, getData] = useState(BigNumber.from(5));
+  // const [account, setAccount] = useState();
+  const [data, getData] = useState("");
+  const [value, setValue] = useState("Comment and gain the token");
+
   const [provider, setProvider] = useState();
   const movieContract = useMovieContract();
+  const petrichorContract = usePetrichorContract();
+  const { approve, allowance, isAppoving } = useAllowance();
+  const [isLocking, setIsLocking] = useState(false);
+  const { signerAddress } = useSignerAddress();
+  const [tokenBalance, setTokenBalance] = useState(0);
+  const [petrichorOwnerAddress, setPetrichorOwnerAddress] = useState(null);
 
-  function connectWallet() {
-    if (!window.ethereum) {
-      alert("Metamask is not installed");
-      return;
+  useEffect(() => {
+    getPetrichorContract();
+  }, [tokenBalance]);
+
+  const getPetrichorContract = async () => {
+    if (!petrichorContract) return;
+    try {
+      setTokenBalance(await petrichorContract.balanceOf(signerAddress));
+      setPetrichorOwnerAddress(await petrichorContract.ownerAddress());
+    } catch {}
+  };
+
+  const addToken = async () => {
+    if (!movieContract && !petrichorContract) return;
+    const etherValue = ethers.utils.parseEther("1");
+    setIsLocking(true);
+    try {
+      await movieContract.transferFrom(
+        petrichorOwnerAddress,
+        signerAddress,
+        etherValue
+      );
+      setIsLocking(false);
+    } catch {
+      setIsLocking(false);
     }
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    setProvider(provider);
-    provider
-      .send("eth_requestAccounts", [])
-      .then((accounts) => setAccount(accounts[0]))
-      .catch((err) => console.log(err));
-
-  }
-
-  const viewMovieInfo = async () => {
-    if (!movieContract) return;
-    const result = await movieContract.getMovie();
-    getData(result);
   };
 
-  const addMovie = async () => {
-    if (!movieContract) return;
-    const transaction = movieContract.addMovie();
-    await transaction.wait();
-  };
-
-
+  // const getBalance = async () => {
+  //   if (!petrichorContract) return;
+  //   setIsLocking(true);
+  //   try {
+  //     const txn = await petrichorContract.getBalance(movieContract.account);
+  //     await txn.wait();
+  //     setIsLocking(false);
+  //   } catch {
+  //     setIsLocking(false);
+  //   }
+  // };
+  // function connectWallet() {
+  //   if (!window.ethereum) {
+  //     alert("Metamask is not installed");
+  //     return;
+  //   }
+  //   const provider = new ethers.providers.Web3Provider(window.ethereum);
+  //   setProvider(provider);
+  //   provider
+  //     .send("eth_requestAccounts", [])
+  //     .then((accounts) => setAccount(accounts[0]))
+  //     .catch((err) => console.log(err));
+  // }
 
   return (
     <div className="App">
-      <header className="App-header">
-        <button
-          className="Connect-Button"
-          onClick={() => {
-            if (account) return;
-            connectWallet();
-          }}
-        >
-          Connect Wallet
-        </button>
-
-        <button
-          className="Token-Button"
-          onClick={() => {
-            if (account) return;
-            viewMovieInfo();
-          }}
-        >
-          Get Token
-        </button>
-        <p>Info : {String(data)}</p>
-      </header>
+      <input
+        placeholder="Enter Your Comment"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+      />
+      <button onClick={addToken}>Add tokens</button>
+      <br />
+      <button onClick={getPetrichorContract}>Balance Value</button>
+      {/* <button onClick={approve}>Approve</button> */}
+      <div>
+        {/* <h4>Allowance: {formatEther(allowance)}</h4> */}
+        <h4>Balance: {ethers.utils.formatUnits(tokenBalance)}</h4>
+        <p>{isLocking ? "Token adding..." : ""}</p>
+      </div>
     </div>
   );
 }
