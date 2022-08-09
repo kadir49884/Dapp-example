@@ -2,34 +2,40 @@ import "./App.css";
 import { useState, useEffect } from "react";
 import { useMovieContract } from "./hooks/useMovieContract";
 import { usePetrichorContract } from "./hooks/usePetrichorContract";
-import { useAllowance } from "./hooks/useAllowance";
-import { formatEther } from "ethers/lib/utils";
+// import { useAllowance } from "./hooks/useAllowance";
+// import { formatEther } from "ethers/lib/utils";
 import { useSignerAddress } from "./hooks/useSignerAddress";
 import { ethers } from "ethers";
+import ReactPlayer from "react-player";
 
 function App() {
-  // const [account, setAccount] = useState();
-  const [data, getData] = useState("");
-  const [value, setValue] = useState("Comment and gain the token");
+  const [backendData, setBackendData] = useState({});
+  const [movieId, setMovieId] = useState(3);
+  // const [data, getData] = useState("");
+  const [value, setValue] = useState("");
 
-  const [provider, setProvider] = useState();
+  // const [provider, setProvider] = useState();
   const movieContract = useMovieContract();
   const petrichorContract = usePetrichorContract();
-  const { approve, allowance, isAppoving } = useAllowance();
+  // const { approve, allowance, isAppoving } = useAllowance();
   const [isLocking, setIsLocking] = useState(false);
   const { signerAddress } = useSignerAddress();
   const [tokenBalance, setTokenBalance] = useState(0);
   const [petrichorOwnerAddress, setPetrichorOwnerAddress] = useState(null);
 
   useEffect(() => {
-    getPetrichorContract();
-  }, [tokenBalance]);
+    fetch(`/movies/${movieId}`)
+      .then((response) => response.json())
+      .then((data) => {
+        setBackendData(data);
+      });
+  }, []);
 
-  const getPetrichorContract = async () => {
+  const getSignerBalance = async () => {
     if (!petrichorContract) return;
     try {
-      setTokenBalance(await petrichorContract.balanceOf(signerAddress));
       setPetrichorOwnerAddress(await petrichorContract.ownerAddress());
+      setTokenBalance(await petrichorContract.balanceOf(signerAddress));
     } catch {}
   };
 
@@ -37,6 +43,7 @@ function App() {
     if (!movieContract && !petrichorContract) return;
     const etherValue = ethers.utils.parseEther("1");
     setIsLocking(true);
+
     try {
       await movieContract.transferFrom(
         petrichorOwnerAddress,
@@ -48,6 +55,17 @@ function App() {
       setIsLocking(false);
     }
   };
+
+  // useEffect(() => {
+  //   getPetrichorContract();
+  // }, []);
+
+  // const getPetrichorContract = async () => {
+  //   if (!petrichorContract) return;
+  //   try {
+  //     setPetrichorOwnerAddress(await petrichorContract.ownerAddress());
+  //   } catch {}
+  // };
 
   // const getBalance = async () => {
   //   if (!petrichorContract) return;
@@ -75,18 +93,31 @@ function App() {
 
   return (
     <div className="App">
+      <p className="Imdb-Title">IMDB PAGE</p>
+      <ReactPlayer className="Movie-Video" url={`${backendData.url}`} />
+
+      <p>
+        {movieId} : {backendData.name}
+      </p>
+
       <input
+        className="Movie-Comment"
         placeholder="Enter Your Comment"
         value={value}
         onChange={(e) => setValue(e.target.value)}
       />
-      <button onClick={addToken}>Add tokens</button>
+      <button onClick={addToken}>Send Comment</button>
       <br />
-      <button onClick={getPetrichorContract}>Balance Value</button>
+      <br />
+      <br />
+      <button onClick={getSignerBalance}>Balance Value</button>
       {/* <button onClick={approve}>Approve</button> */}
       <div>
         {/* <h4>Allowance: {formatEther(allowance)}</h4> */}
-        <h4>Balance: {ethers.utils.formatUnits(tokenBalance)}</h4>
+        <h4>
+          Balance:{" "}
+          {parseFloat(ethers.utils.formatUnits(tokenBalance)).toFixed(0)}
+        </h4>
         <p>{isLocking ? "Token adding..." : ""}</p>
       </div>
     </div>
